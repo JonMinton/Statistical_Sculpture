@@ -27,16 +27,107 @@ counts <- read.csv("data/tidy/counts.csv")
 # east, west
 # logged
 
-east_germany <- subset(counts, subset=country=="DEUTE")
-west_germany <- subset(counts, subset=country=="DEUTW")
+east_germany <- subset(counts, subset=country=="DEUTE" & age <=80)
+west_germany <- subset(counts, subset=country=="DEUTW" & age <=80)
 
 
-east_germany <- mutate(east_germany, death_rate = death_count / population_count)
-west_germany <- mutate(west_germany, death_rate = death_count / population_count)
+east_germany <- mutate(
+  east_germany, 
+  death_rate = death_count / population_count,
+  ldeath_rate = log(death_rate)
+  )
 
-east_f_matrix <- recast(subset(east_germany, subset=sex=="female", select=c("year", "age", "death_rate")), age ~ year, id.var=c("age", "year"), measure="death_rate")
-east_m_matrix <- recast(subset(east_germany, subset=sex=="male", select=c("year", "age", "death_rate")), age ~ year, id.var=c("age", "year"), measure="death_rate")
+west_germany <- mutate(
+  west_germany, 
+  death_rate = death_count / population_count,
+  ldeath_rate = log(death_rate)
+  )
 
+east_f_matrix <- recast(
+  subset(east_germany, subset=sex=="female", select=c("year", "age", "ldeath_rate")), 
+  age ~ year, 
+  id.var=c("age", "year"), 
+  measure="ldeath_rate"
+  )
+
+east_m_matrix <- recast(
+  subset(east_germany, subset=sex=="male", select=c("year", "age", "ldeath_rate")), 
+  age ~ year, 
+  id.var=c("age", "year"), 
+  measure="ldeath_rate"
+  )
+
+west_f_matrix <- recast(
+  subset(west_germany, subset=sex=="female", select=c("year", "age", "ldeath_rate")), 
+  age ~ year, 
+  id.var=c("age", "year"), 
+  measure="ldeath_rate"
+  )
+
+west_m_matrix <- recast(
+  subset(west_germany, subset=sex=="male", select=c("year", "age", "ldeath_rate")), 
+  age ~ year, 
+  id.var=c("age", "year"), 
+  measure="ldeath_rate"
+)
+
+
+fn <- function(x){
+  ages <- x$age
+  x$age <- NULL
+  x <- as.matrix(x)
+  x - min(x)
+  rownames(x) <- ages
+  return(x)
+}
+
+
+east_f_matrix <- fn(east_f_matrix)
+east_m_matrix <- fn(east_m_matrix)
+west_f_matrix <- fn(west_f_matrix)
+west_m_matrix <- fn(west_m_matrix)
+
+
+
+r2stl(
+  x=as.numeric(rownames(east_f_matrix)),
+  y=as.numeric(colnames(east_f_matrix)),
+  z=east_f_matrix,
+  
+  filename="stl/east_f.stl",
+  z.expand=T,
+  show.persp=F
+)
+
+r2stl(
+  x=as.numeric(rownames(east_m_matrix)),
+  y=as.numeric(colnames(east_m_matrix)),
+  z=east_m_matrix,
+  
+  filename="stl/east_m.stl",
+  z.expand=T,
+  show.persp=T
+)
+
+r2stl(
+  x=as.numeric(rownames(east_f_matrix)),
+  y=as.numeric(colnames(east_f_matrix)),
+  z=east_f_matrix,
+  
+  filename="stl/west_f.stl",
+  z.expand=T,
+  show.persp=F
+)
+
+r2stl(
+  x=as.numeric(rownames(east_m_matrix)),
+  y=as.numeric(colnames(east_m_matrix)),
+  z=east_m_matrix,
+  
+  filename="stl/west_m.stl",
+  z.expand=T,
+  show.persp=T
+)
 
 
 ###########################################################################
