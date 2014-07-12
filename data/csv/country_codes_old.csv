@@ -1,0 +1,49 @@
+Country.Code,Country.Name,Pretty.Country.Name
+AUS,Australia,Australia
+AUT,Austria,Austria
+BEL,Belgium,Belgium
+BGR,Bulgaria,Bulgaria
+BLR,Belarus,Belarus
+CAN,Canada,Canada
+CHE,Switzerland,Switzerland
+CHL,Chile,Chile
+CZE,Czech.Republic,Czech Republic
+DEUTE,East.Germany1,East Germany
+DEUTFRG,West.Germany1,West Germany (Federal Republic of Germany)
+DEUTGDR,East.Germany2,East Germany (German Democratic Republic)
+DEUTNP,Germany,Germany
+DEUTW,West.Germany2,West Germany
+DNK,Denmark,Denmark
+ESP,Spain,Spain
+EST,Estonia,Estonia
+FIN,Finland,Finland
+FRACNP,France.Civilian,France (Civilian)
+FRATNP,France.Total,France (Total)
+GBR_NIR,Northern.Ireland,Northern Ireland
+GBR_NP,United.Kingdom,United Kingdom
+GBR_SCO,Scotland,Scotland
+GBRCENW,England.and.Wales.Civilian,England & Wales (Civilian)
+GBRTENW,England.and.Wales.Total,England & Wales (Total)
+HUN,Hungary,Hungary
+IRL,Ireland,Ireland
+ISL,Iceland,Iceland
+ISR,Israel,Israel
+ITA,Italy,Italy
+JPN,Japan,Japan
+LTU,Lithuania,Lithuania
+LUX,Luxembourg,Luxembourg
+LVA,Latvia,Latvia
+NLD,Netherlands,Netherlands
+NOR,Norway,Norway
+NZL_MA,New.Zealand.Maori,New Zealand (Maori)
+NZL_NM,New.Zealand.NonMaori,New Zealand (Non-Maori)
+NZL_NP,New.Zealand,New Zealand
+POL,Poland,Poland
+PRT,Portugal,Portugal
+RUS,Russia,Russia
+SVK,Slovakia,Slovakia
+SVN,Slovenia,Slovenia
+SWE,Sweden,Sweden
+TWN,Taiwan,Taiwan
+UKR,Ukraine,Ukraine
+USA,United.States,United States
