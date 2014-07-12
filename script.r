@@ -19,7 +19,23 @@ counts <- read.csv("data/tidy/counts.csv")
 
 ###########################################################################
 
+#DEUTE - east germany
+#DEUTW - west germany
 
+# Mortality rates;
+# males, females
+# east, west
+# logged
+
+east_germany <- subset(counts, subset=country=="DEUTE")
+west_germany <- subset(counts, subset=country=="DEUTW")
+
+
+east_germany <- mutate(east_germany, death_rate = death_count / population_count)
+west_germany <- mutate(west_germany, death_rate = death_count / population_count)
+
+east_f_matrix <- recast(subset(east_germany, subset=sex=="female", select=c("year", "age", "death_rate")), age ~ year, id.var=c("age", "year"), measure="death_rate")
+east_m_matrix <- recast(subset(east_germany, subset=sex=="male", select=c("year", "age", "death_rate")), age ~ year, id.var=c("age", "year"), measure="death_rate")
 
 
 
