@@ -12,7 +12,7 @@ RequiredPackages(
     )
   )
 
-source("scripts/old_functions.r")
+#source("scripts/old_functions.r")
 
 counts <- read.csv("data/tidy/counts.csv")
 
@@ -94,7 +94,7 @@ r2stl(
   y=as.numeric(colnames(east_f_matrix)),
   z=east_f_matrix,
   
-  filename="stl/east_f.stl",
+  filename="stl/germany/east_f.stl",
   z.expand=T,
   show.persp=F
 )
@@ -104,7 +104,7 @@ r2stl(
   y=as.numeric(colnames(east_m_matrix)),
   z=east_m_matrix,
   
-  filename="stl/east_m.stl",
+  filename="stl/germany/east_m.stl",
   z.expand=T,
   show.persp=T
 )
@@ -114,7 +114,7 @@ r2stl(
   y=as.numeric(colnames(east_f_matrix)),
   z=east_f_matrix,
   
-  filename="stl/west_f.stl",
+  filename="stl/germany/west_f.stl",
   z.expand=T,
   show.persp=F
 )
@@ -124,7 +124,7 @@ r2stl(
   y=as.numeric(colnames(east_m_matrix)),
   z=east_m_matrix,
   
-  filename="stl/west_m.stl",
+  filename="stl/germany/west_m.stl",
   z.expand=T,
   show.persp=T
 )
@@ -133,7 +133,7 @@ r2stl(
 ###########################################################################
 ##################################################################
 
-Italy 
+#Italy 
 
 counts_ita <- subset(counts, subset=country=="ITA")
 
@@ -144,6 +144,80 @@ tmp2 <- recast(tmp, year ~ age, measure.var="death_rate")
 
 
 ##################################################################################
+
+fn <- function(x){
+  ages <- x$age
+  x$age <- NULL
+  x <- as.matrix(x)
+  x - min(x)
+  rownames(x) <- ages
+  return(x)
+}
+
+# automated:
+stl_spooler <- function(x, min_age=0, max_age = 80){
+  x <- subset(x, age >= min_age & age <= max_age)
+  x <- mutate(
+    x, 
+    death_rate = death_count / population_count,
+    ldeath_rate = log(death_rate)
+  )
+  
+  x_rate <- recast(
+    subset(x, select=c("year" ,"age" ,"death_rate")),
+    age ~ year,
+    id.var=c("age", "year"),
+    measure="death_rate"
+    )
+  
+  x_lrate <- recast(
+    subset(x, select=c("year", "age", "ldeath_rate")), 
+    age ~ year, 
+    id.var=c("age", "year"), 
+    measure="ldeath_rate"
+  )
+  
+  x_rate <- fn(x_rate)
+  x_lrate <- fn(x_lrate)
+  
+  r2stl(
+    x=as.numeric(rownames(x_rate)),
+    y=as.numeric(colnames(x_rate)),
+    z=x_rate,
+    
+    filename=paste0(
+      "stl/identity/death_rate_",
+      x$country[1], "_",
+      x$sex[1], ".stl"
+      ),
+    z.expand=T,
+    show.persp=F
+  )
+
+  r2stl(
+    x=as.numeric(rownames(x_lrate)),
+    y=as.numeric(colnames(x_lrate)),
+    z=x_lrate,
+    
+    filename=paste0(
+      "stl/log/ldeath_rate_",
+      x$country[1], "_",
+      x$sex[1], ".stl"
+    ),
+    z.expand=T,
+    show.persp=F
+  )
+  
+}
+
+
+d_ply(
+  counts, 
+  .(country, sex),
+  stl_spooler,
+  .progress="text"
+  )
+
 
 
 ######################################################################################################
