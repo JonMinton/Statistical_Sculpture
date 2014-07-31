@@ -1,5 +1,9 @@
 rm(list=ls())
 
+# To do
+# 1) add back imputation research
+
+
 source("scripts/LoadPackages.R")
 
 RequiredPackages(
@@ -137,10 +141,9 @@ stl_dif_spooler <- function(x, min_age=0, max_age = 80){
               id.var=c("age", "year"),
               measure="ldif"
               )
-  browser()
   
   x <- fn(x)
-  browser()
+
   
   try(
     r2stl(
