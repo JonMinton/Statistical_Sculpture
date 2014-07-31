@@ -109,6 +109,8 @@ d_ply(
 #### Log mortality rate differences
 #########################################################################################
 
+source("scripts/imputation_functions.r")
+
 #
 fn <- function(x){
   ages <- x$age
@@ -145,7 +147,7 @@ stl_dif_spooler <- function(x, min_age=0, max_age = 80){
   x <- fn(x)
 
   
-  try(
+  e <- try(
     r2stl(
       x=as.numeric(rownames(x)),
       y=as.numeric(colnames(x)),
@@ -156,6 +158,13 @@ stl_dif_spooler <- function(x, min_age=0, max_age = 80){
         )
       )
   )
+  
+  if (class(e)=="try-error"){
+    browser()
+    xx <- impute_matrix(x, uselog=F, repeat.it=T)
+    browser()
+    
+  }
   
 }
 
