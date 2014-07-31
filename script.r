@@ -142,15 +142,17 @@ stl_dif_spooler <- function(x, min_age=0, max_age = 80){
   x <- fn(x)
   browser()
   
-  r2stl(
-    x=as.numeric(rownames(x)),
-    y=as.numeric(colnames(x)),
-    z=x,
-    filename=paste0(
-      "stl/ldif/dif_ldeath_rate_",
-      this.country, ".stl"
+  try(
+    r2stl(
+      x=as.numeric(rownames(x)),
+      y=as.numeric(colnames(x)),
+      z=x,
+      filename=paste0(
+        "stl/ldif/dif_ldeath_rate_",
+        this.country, ".stl"
+        )
       )
-    )
+  )
   
 }
 
