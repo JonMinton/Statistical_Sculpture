@@ -105,9 +105,68 @@ d_ply(
   )
 
 
+#############################################################################################
+########## A little toy example 
+
+x1 <- matrix(
+  c(0.45, NA, 0.50,
+    0.60, 0.55, 0.62,
+    0.58, 0.56, 0.66
+    ),
+  nrow=3, byrow=T
+  )
+
+source("scripts/imputation_functions.r")
+
+y1 <- impute_matrix(x1, repeat.it=T)
+exp(y1$output)
+
+y1a <- impute_matrix(x1, uselog=T, repeat.it=T)
+y1a$output
+
+
+
+x2 <- matrix(
+  c(0.45, NA, 0.50, NA,
+    0.60, 0.55, 0.62, 0.66,
+    NA, NA, 0.66, 0.59,
+    NA, NA, 0.64, 0.70
+  ),
+  nrow=4, byrow=T
+)
+
+y2 <- impute_matrix(x2, uselog=T, repeat.it=T)
+# produces error messages but they are successfully caught
+exp(y2$output)
+
+y2a <- impute_matrix(x2, uselog=F, repeat.it=T)
+# produces error messages but they are successfully caught
+y2a$output
+
+
+
+x3 <- matrix(
+  c(0.45, NA, 0.50, 0.71,
+    Inf, 0.55, 0.62, 0.66,
+    0.55, 0.62, -Inf, 0.59,
+    0.63, 0.59, 0.64, 0.70
+  ),
+  nrow=4, byrow=T
+)
+
+y3 <- impute_matrix(x3, uselog=F, repeat.it=T)
+
 #########################################################################################
 #### Log mortality rate differences
 #########################################################################################
+# Note : this is not working properly yet
+
+# Ideas: 
+# I think the problem is caused by fn being thrown off by the presence of -Inf values
+# meaning that other values cannot be normalised appropriately. This suggests that they need 
+# to be removed prior to passing to fn rather than at the end, prior to passing 
+
+# NOTE : At present this does not work
 
 source("scripts/imputation_functions.r")
 
@@ -144,27 +203,22 @@ stl_dif_spooler <- function(x, min_age=0, max_age = 80){
               measure="ldif"
               )
   
+  x <- impute_matrix(x, uselog=F, repeat.it=T)$output
+  
   x <- fn(x)
 
   
-  e <- try(
-    r2stl(
-      x=as.numeric(rownames(x)),
-      y=as.numeric(colnames(x)),
-      z=x,
-      filename=paste0(
-        "stl/ldif/dif_ldeath_rate_",
-        this.country, ".stl"
-        )
+
+  r2stl(
+    x=as.numeric(rownames(x)),
+    y=as.numeric(colnames(x)),
+    z=x,
+    filename=paste0(
+      "stl/ldif/dif_ldeath_rate_",
+      this.country, ".stl"
       )
-  )
-  
-  if (class(e)=="try-error"){
-    browser()
-    xx <- impute_matrix(x, uselog=F, repeat.it=T)
-    browser()
-    
-  }
+    )
+
   
 }
 

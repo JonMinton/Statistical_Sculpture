@@ -22,12 +22,11 @@ impute_matrix <- function(X, uselog=T, repeat.it=F){
   dim.y <- dim(input)[2]
   
   imputationMatrix <- matrix(0, dim.x, dim.y)
-  imputationCoords_na <- which(is.na(X), T)
-  imputationCoords_inf <- which(is.infinite(X), T)
-  imputationCoords <- rbind(
-    imputationCoords_na, 
-    imputationCoords_inf
-    )
+
+  imputationCoords_inf <- which(is.infinite(input), T)
+  input[imputationCoords_inf] <- NA # turn infs into NAs
+  
+  imputationCoords <- which(is.na(input), T)
   
   numValsToImpute <- dim(imputationCoords)[1]
   
