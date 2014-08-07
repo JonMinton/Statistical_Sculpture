@@ -473,3 +473,41 @@ counts_ita <- mutate(counts_ita, death_rate = death_count/population_count)
 
 tmp <- subset(counts_ita, subset=sex=="female" & age <=80, select=c("year", "age", "death_rate"))
 tmp2 <- recast(tmp, year ~ age, measure.var="death_rate")
+
+#############################################################################
+#############################################################################
+
+# Now to do a comparison between Engladn & Wales and Scotland
+
+counts_subset <- subset(counts, subset=country=="GBR_SCO" | country=="GBRTENW")
+counts_subset <- mutate(counts_subset, death_rate = death_count/population_count)
+years_minmax <- ddply(counts_subset, .(country), function(x) c(min=min(x$year), max=max(x$year)))
+# from 1855 to 2011
+
+counts_subset <- subset(counts_subset, subset=year>=1855 & age <=80)
+
+counts_subset$death_count <- NULL
+counts_subset$population_count <- NULL
+
+counts_wide <- recast(counts_subset, year + age + sex ~ country, 
+                      id.var=c("year", "age", "sex", "country"), 
+                      measure="death_rate"
+                      )
+
+counts_wide <- rename(counts_wide, c("GBR_SCO"="scotland", "GBRTENW"="england_wales"))
+counts_wide <- mutate(counts_wide, difference=scotland-england_wales)
+
+
+### To do: apply contour map code with previous arguments to these data
+
+# ss <- subset(counts_wide, subset=sex=="male")
+# > contourplot(difference ~ age + year, ss)
+# > contourplot(difference ~ year + age, ss)
+# > contourplot(log(difference) ~ year + age, ss)
+# Warning message:
+#   In log(difference) : NaNs produced
+# > contourplot(scotland ~ year + age, ss)
+# > contourplot(england ~ year + age, ss)
+# Error in eval(expr, envir, enclos) : object 'england' not found
+# > contourplot(england_wales ~ year + age, ss)
+# 
