@@ -477,7 +477,7 @@ tmp2 <- recast(tmp, year ~ age, measure.var="death_rate")
 #############################################################################
 #############################################################################
 
-# Now to do a comparison between Engladn & Wales and Scotland
+# Now to do a comparison between England & Wales and Scotland
 
 counts_subset <- subset(counts, subset=country=="GBR_SCO" | country=="GBRTENW")
 counts_subset <- mutate(counts_subset, death_rate = death_count/population_count)
@@ -495,10 +495,22 @@ counts_wide <- recast(counts_subset, year + age + sex ~ country,
                       )
 
 counts_wide <- rename(counts_wide, c("GBR_SCO"="scotland", "GBRTENW"="england_wales"))
-counts_wide <- mutate(counts_wide, difference=scotland-england_wales)
+counts_wide <- mutate(counts_wide, 
+                      difference=scotland-england_wales, 
+                      dif_log = log(scotland) - log(england_wales)
+                      )
 
 
 ### To do: apply contour map code with previous arguments to these data
+data_ss <- subset(counts_wide, subset=sex=="male")
+
+dif_abs_max <- max(abs(data_ss$dif_log))
+
+contourplot(dif_log ~ year * age, 
+            data=data_ss, 
+            region=T, col.regions=rev(heat.colors(200)), cuts=10)                   
+
+contourplot(england_wales ~ year * age | sex, data=counts_wide, region=T, col.regions=rev(heat.colors(200)), cuts=20)                   
 
 # ss <- subset(counts_wide, subset=sex=="male")
 # > contourplot(difference ~ age + year, ss)
