@@ -523,3 +523,67 @@ contourplot(england_wales ~ year * age | sex, data=counts_wide, region=T, col.re
 # Error in eval(expr, envir, enclos) : object 'england' not found
 # > contourplot(england_wales ~ year + age, ss)
 # 
+
+
+
+##############################################################################################################
+# Population counts:
+
+#########################################################################################
+#########################################################################################
+## To Automate the process ##############################################################
+
+
+#########################################################################################
+#### Mortality rates: log and identity scale
+#########################################################################################
+
+#
+fn <- function(x){
+  ages <- x$age
+  x$age <- NULL
+  x <- as.matrix(x)
+  x - min(x)
+  rownames(x) <- ages
+  return(x)
+}
+
+# automated:
+stl_spooler <- function(x, min_age=0, max_age = 100){
+  x <- subset(x, age >= min_age & age <= max_age)
+  
+  x_rate <- recast(
+    subset(x, select=c("year" ,"age" ,"population_count")),
+    age ~ year,
+    id.var=c("age", "year"),
+    measure="population_count"
+  )
+  
+  
+  x_rate <- fn(x_rate)
+  
+  r2stl(
+    x=as.numeric(rownames(x_rate)),
+    y=as.numeric(colnames(x_rate)),
+    z=x_rate,
+    
+    filename=paste0(
+      "stl/population/population_",
+      x$country[1], "_",
+      x$sex[1], ".stl"
+    ),
+    z.expand=T,
+    show.persp=F
+  )
+  
+  
+}
+
+
+d_ply(
+  counts, 
+  .(country, sex),
+  stl_spooler,
+  .progress="text"
+)
+
