@@ -35,7 +35,6 @@ fn <- function(x){
   ages <- x$age
   x$age <- NULL
   x <- as.matrix(x)
-  x - min(x)
   rownames(x) <- ages
   return(x)
 }
