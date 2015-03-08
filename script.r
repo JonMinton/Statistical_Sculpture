@@ -1,29 +1,186 @@
 rm(list=ls())
 
-# To do
-# 1) add back imputation research
+# Load packages -----------------------------------------------------------
 
 
-source("scripts/LoadPackages.R")
+require(tidyr)
+require(stringr)
+require(plyr)
+require(dplyr)
 
-RequiredPackages(
-  c(
-    "reshape",
-    "lattice",
-    "r2stl",
-    "plyr",
-    "rgl"
+require(r2stl)
+
+require(rgl)
+require(ggplot2)
+
+
+# Load Data ---------------------------------------------------------------
+
+
+dta_hmd <- read.csv("data/tidy/hmd/lexis_square_combined.csv") %>% tbl_df
+dta_hfd <- read.csv("data/tidy/hfd/lexis_square_combined.csv") %>% tbl_df
+
+dta_hfd$code <- tolower(dta_hfd$code)
+
+# Individual Spooling -----------------------------------------------------
+
+dir.create("stl/individual/populations", recursive=TRUE)
+fn <- function(x){
+  this_country <- x$country[1] 
+  this_sex <- x$sex[1]
+  year_min <- x$year %>% min
+  year_max <- x$year %>% max
+  
+  dta <- x  %>% select(year, age, population_count) %>%
+    mutate(population_count = population_count + 0.02 * max(population_count)) %>%
+    spread(age, population_count)
+  rownames(dta) <- dta$year
+  dta$year <- NULL
+  dta <- as.matrix(dta)
+  
+  r2stl(
+    x=as.numeric(rownames(dta)),
+    y=as.numeric(colnames(dta)), 
+    z=dta,
+    z.expand=TRUE, 
+    show.persp=F,
+    filename=paste0(
+      "stl/individual/populations/", this_country, "_", this_sex, "_(",year_min, "-", year_max, ").stl"
+      )
+    )
+    
+}
+
+d_ply(dta_hmd, .(country, sex), fn, .progress="text")
+
+
+# log death rate
+
+dir.create("stl/individual/lmorts", recursive=TRUE)
+fn <- function(x){
+  this_country <- x$country[1] 
+  this_sex <- x$sex[1]
+  year_min <- x$year %>% min
+  year_max <- x$year %>% max
+  
+  dta <- x  %>% mutate(
+    death_rate=death_count/population_count,
+    ldeath_rate =log(death_rate))  %>%  
+  select(year, age, ldeath_rate) %>%
+    mutate(ldeath_rate = ldeath_rate + 0.02 * max(ldeath_rate)) %>%
+    spread(age, ldeath_rate)
+  rownames(dta) <- dta$year
+  dta$year <- NULL
+  dta <- as.matrix(dta)
+  
+  r2stl(
+    x=as.numeric(rownames(dta)),
+    y=as.numeric(colnames(dta)), 
+    z=dta,
+    z.expand=TRUE, 
+    show.persp=F,
+    filename=paste0(
+      "stl/individual/lmorts/", this_country, "_", this_sex, "_(",year_min, "-", year_max, ").stl"
     )
   )
+  
+}
 
-#source("scripts/old_functions.r")
-
-counts <- read.csv("data/tidy/counts.csv")
+d_ply(dta_hmd, .(country, sex), fn, .progress="text")
 
 
-#########################################################################################
-#########################################################################################
-## To Automate the process ##############################################################
+# fertility rate
+
+dir.create("stl/individual/fertility", recursive=TRUE)
+fn <- function(x){
+  this_country <- x$code[1] 
+  year_min <- x$year %>% min
+  year_max <- x$year %>% max
+  
+  dta <- x  %>% 
+    select(year, age, asfr) %>%
+    mutate(asfr = asfr + 0.02 * max(asfr)) %>%
+    spread(age, asfr)
+  rownames(dta) <- dta$year
+  dta$year <- NULL
+  dta <- as.matrix(dta)
+  
+  r2stl(
+    x=as.numeric(rownames(dta)),
+    y=as.numeric(colnames(dta)), 
+    z=dta,
+    z.expand=TRUE, 
+    show.persp=F,
+    filename=paste0(
+      "stl/individual/fertility/", this_country, "_(",year_min, "-", year_max, ").stl"
+    )
+  )
+  
+}
+
+d_ply(dta_hfd, .(code), fn, .progress="text")
+
+
+# Grouped Spooling --------------------------------------------------------
+
+dir.create("stl/groups/populations", recursive=TRUE)
+fn <- function(x){
+  this_country <- x$country[1] 
+  year_min <- x$year %>% min
+  year_max <- x$year %>% max
+  
+  dta_m <- x  %>% 
+    filter(sex=="male") %>%
+    select(year, age, population_count) %>%
+    mutate(population_count = population_count + 0.02 * max(population_count)) %>%
+    spread(age, population_count)
+  rownames(dta_m) <- dta_m$year
+  dta_m$year <- NULL
+  dta_m <- as.matrix(dta_m)
+  
+  dta_f <- x  %>% 
+    filter(sex=="female") %>%
+      select(year, age, population_count) %>%
+      mutate(population_count = population_count + 0.02 * max(population_count)) %>%
+      spread(age, population_count)
+    rownames(dta_f) <- dta_f$year
+    dta_f$year <- NULL
+    dta_f <- as.matrix(dta_f)
+    dta_f <- apply(dta_f, 2, rev)
+    
+  dta_j <- matrix(
+    data=max(
+      data=x$population_count) * 0.015,
+      nrow=7 + dim(dta_f)[1] * 2,
+      ncol=4 + dim(dta_m)[2] 
+  )
+  
+  dta_j[
+    3:(2+dim(dta_m)[1]),
+    3:(2+dim(dta_m)[2])
+    ] <- dta_m
+  
+  dta_j[
+    (2+dim(dta_f)[1]):(dim(dta_j)[1] - 3),
+    3:(2+dim(dta_f)[2])
+    ] <- dta_f
+  
+  
+  r2stl(
+    x=as.numeric(rownames(dta_j)),
+    y=as.numeric(colnames(dta)), 
+    z=dta,
+    z.expand=TRUE, 
+    show.persp=F,
+    filename=paste0(
+      "stl/individual/lmorts/", this_country, "_", this_sex, "_(",year_min, "-", year_max, ").stl"
+    )
+  )
+  
+}
+debug(fn)
+
+d_ply(dta_hmd, .(country), fn, .progress="text")
 
 
 #########################################################################################
@@ -220,185 +377,6 @@ r2stl(
 )
 
 
-###################################################################################
-####################################################################################
-### EAST AND WEST GERMANY ONLY #####################################################
-####################################################################################
-# IDENTITY RATHER THAN LOG
-
-#DEUTE - east germany
-#DEUTW - west germany
-
-# Mortality rates;
-# males, females
-# east, west
-# logged
-
-east_germany <- subset(counts, subset=country=="DEUTE" & age <=80)
-west_germany <- subset(counts, subset=country=="DEUTW" & age <=80)
-
-
-east_germany <- mutate(
-  east_germany, 
-  death_rate = death_count / population_count,
-  ldeath_rate = log(death_rate)
-)
-
-west_germany <- mutate(
-  west_germany, 
-  death_rate = death_count / population_count,
-  ldeath_rate = log(death_rate)
-)
-
-east_f_matrix <- recast(
-  subset(east_germany, subset=sex=="female", select=c("year", "age", "ldeath_rate")), 
-  age ~ year, 
-  id.var=c("age", "year"), 
-  measure="ldeath_rate"
-)
-
-east_m_matrix <- recast(
-  subset(east_germany, subset=sex=="male", select=c("year", "age", "death_rate")), 
-  age ~ year, 
-  id.var=c("age", "year"), 
-  measure="death_rate"
-)
-
-west_f_matrix <- recast(
-  subset(west_germany, subset=sex=="female", select=c("year", "age", "death_rate")), 
-  age ~ year, 
-  id.var=c("age", "year"), 
-  measure="death_rate"
-)
-
-west_m_matrix <- recast(
-  subset(west_germany, subset=sex=="male", select=c("year", "age", "death_rate")), 
-  age ~ year, 
-  id.var=c("age", "year"), 
-  measure="death_rate"
-)
-
-
-fn <- function(x){
-  ages <- x$age
-  x$age <- NULL
-  x <- as.matrix(x)
-  x - min(x)
-  rownames(x) <- ages
-  return(x)
-}
-
-
-east_f_matrix <- fn(east_f_matrix)
-east_m_matrix <- fn(east_m_matrix)
-west_f_matrix <- fn(west_f_matrix)
-west_m_matrix <- fn(west_m_matrix)
-
-
-
-r2stl(
-  x=as.numeric(rownames(east_f_matrix)),
-  y=as.numeric(colnames(east_f_matrix)),
-  z=east_f_matrix,
-  
-  filename="stl/germany/east_f_identity.stl",
-  z.expand=T,
-  show.persp=F
-)
-
-r2stl(
-  x=as.numeric(rownames(east_m_matrix)),
-  y=as.numeric(colnames(east_m_matrix)),
-  z=east_m_matrix,
-  
-  filename="stl/germany/east_m_identity.stl",
-  z.expand=T,
-  show.persp=T
-)
-
-r2stl(
-  x=as.numeric(rownames(east_f_matrix)),
-  y=as.numeric(colnames(east_f_matrix)),
-  z=east_f_matrix,
-  
-  filename="stl/germany/west_f_identity.stl",
-  z.expand=T,
-  show.persp=F
-)
-
-r2stl(
-  x=as.numeric(rownames(east_m_matrix)),
-  y=as.numeric(colnames(east_m_matrix)),
-  z=east_m_matrix,
-  
-  filename="stl/germany/west_m_identity.stl",
-  z.expand=T,
-  show.persp=T
-)
-
-
-###########################################################################
-##################################################################
-
-#Italy 
-
-counts_ita <- subset(counts, subset=country=="ITA")
-
-counts_ita <- mutate(counts_ita, death_rate = death_count/population_count)
-
-tmp <- subset(counts_ita, subset=sex=="female" & age <=80, select=c("year", "age", "death_rate"))
-tmp2 <- recast(tmp, year ~ age, measure.var="death_rate")
-
-#############################################################################
-#############################################################################
-
-# Now to do a comparison between England & Wales and Scotland
-
-counts_subset <- subset(counts, subset=country=="GBR_SCO" | country=="GBRTENW")
-counts_subset <- mutate(counts_subset, death_rate = death_count/population_count)
-years_minmax <- ddply(counts_subset, .(country), function(x) c(min=min(x$year), max=max(x$year)))
-# from 1855 to 2011
-
-counts_subset <- subset(counts_subset, subset=year>=1855 & age <=80)
-
-counts_subset$death_count <- NULL
-counts_subset$population_count <- NULL
-
-counts_wide <- recast(counts_subset, year + age + sex ~ country, 
-                      id.var=c("year", "age", "sex", "country"), 
-                      measure="death_rate"
-                      )
-
-counts_wide <- rename(counts_wide, c("GBR_SCO"="scotland", "GBRTENW"="england_wales"))
-counts_wide <- mutate(counts_wide, 
-                      difference=scotland-england_wales, 
-                      dif_log = log(scotland) - log(england_wales)
-                      )
-
-
-### To do: apply contour map code with previous arguments to these data
-data_ss <- subset(counts_wide, subset=sex=="male")
-
-dif_abs_max <- max(abs(data_ss$dif_log))
-
-contourplot(dif_log ~ year * age, 
-            data=data_ss, 
-            region=T, col.regions=rev(heat.colors(200)), cuts=10)                   
-
-contourplot(england_wales ~ year * age | sex, data=counts_wide, region=T, col.regions=rev(heat.colors(200)), cuts=20)                   
-
-# ss <- subset(counts_wide, subset=sex=="male")
-# > contourplot(difference ~ age + year, ss)
-# > contourplot(difference ~ year + age, ss)
-# > contourplot(log(difference) ~ year + age, ss)
-# Warning message:
-#   In log(difference) : NaNs produced
-# > contourplot(scotland ~ year + age, ss)
-# > contourplot(england ~ year + age, ss)
-# Error in eval(expr, envir, enclos) : object 'england' not found
-# > contourplot(england_wales ~ year + age, ss)
-# 
-
 
 
 ##############################################################################################################
@@ -462,3 +440,39 @@ d_ply(
   .progress="text"
 )
 
+dir.create("stl/hfd/", recursive=T)
+fn <- function(x){
+  
+  this_country <- x$country[1]
+  
+  mtrx <- x %>%
+    select(year, age, asfr) %>%
+    mutate(asfr=asfr+0.02 * max(asfr)) %>% # Add 2% to ASFR values as a minimum height is needed
+    spread(key=age, value=asfr) 
+  
+  years <- mtrx$year
+  
+  mtrx$year <- NULL
+  
+  mtrx <- as.matrix(mtrx)
+  rownames(mtrx) <- years
+  
+  
+  r2stl(
+    x=as.numeric(rownames(mtrx)),
+    y=as.numeric(colnames(mtrx)),
+    z=mtrx,
+    
+    filename=paste0("stl/hfd/", this_country, "_asfr.stl"),
+    z.expand=T,
+    show.persp=F
+  )
+}
+
+
+d_ply(
+  data_hfd, 
+  .(country),
+  fn,
+  .progress="text"
+)
