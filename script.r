@@ -51,7 +51,9 @@ fn <- function(x){
     
 }
 
-d_ply(dta_hmd, .(country, sex), fn, .progress="text")
+dta_hmd %>%
+  filter(age <=90 & sex !="total") %>%
+  d_ply(., .(country, sex), fn, .progress="text")
 
 
 # log death rate
@@ -64,7 +66,7 @@ fn <- function(x){
   year_max <- x$year %>% max
   
   dta <- x  %>% mutate(
-    death_rate=death_count/population_count,
+    death_rate=(death_count+0.5)/(population_count+0.5),
     ldeath_rate =log(death_rate))  %>%  
   select(year, age, ldeath_rate) %>%
     mutate(ldeath_rate = ldeath_rate + 0.02 * max(ldeath_rate)) %>%
@@ -86,7 +88,9 @@ fn <- function(x){
   
 }
 
-d_ply(dta_hmd, .(country, sex), fn, .progress="text")
+dta_hmd %>%
+  filter(age <=90 & sex !="total") %>%
+  d_ply(., .(country, sex), fn, .progress="text")
 
 
 # fertility rate
@@ -147,40 +151,114 @@ fn <- function(x){
     dta_f$year <- NULL
     dta_f <- as.matrix(dta_f)
     dta_f <- apply(dta_f, 2, rev)
-    
+
+  n_row <- dim(dta_f)[1]
+  n_col <- dim(dta_f)[2]
+  
   dta_j <- matrix(
-    data=max(
-      data=x$population_count) * 0.015,
-      nrow=7 + dim(dta_f)[1] * 2,
-      ncol=4 + dim(dta_m)[2] 
+    data=max(data=x$population_count) * 0.015,
+    nrow= 2 * n_row + 7, 
+    ncol=     n_col + 4
   )
   
   dta_j[
-    3:(2+dim(dta_m)[1]),
-    3:(2+dim(dta_m)[2])
+    2+ 1:n_row,
+    2+ 1:n_col
     ] <- dta_m
   
   dta_j[
-    (2+dim(dta_f)[1]):(dim(dta_j)[1] - 3),
-    3:(2+dim(dta_f)[2])
+    5 + n_row + 1:n_row,
+    2 + 1:n_col
     ] <- dta_f
   
-  
   r2stl(
-    x=as.numeric(rownames(dta_j)),
-    y=as.numeric(colnames(dta)), 
-    z=dta,
+    x=1:nrow(dta_j),
+    y=1:ncol(dta_j), 
+    z=dta_j,
     z.expand=TRUE, 
     show.persp=F,
     filename=paste0(
-      "stl/individual/lmorts/", this_country, "_", this_sex, "_(",year_min, "-", year_max, ").stl"
+      "stl/groups/populations/", this_country, "_(",year_min, "-", year_max, ").stl"
     )
   )
   
 }
-debug(fn)
 
-d_ply(dta_hmd, .(country), fn, .progress="text")
+dta_hmd %>%
+  filter(age <= 90 & sex !="total") %>%
+  d_ply(., .(country), fn, .progress="text")
+
+
+
+
+dir.create("stl/groups/lmorts", recursive=TRUE)
+fn <- function(x){
+  this_country <- x$country[1] 
+  year_min <- x$year %>% min
+  year_max <- x$year %>% max
+  
+  x <- x %>%
+    mutate(death_rate=(death_count+0.5) / (population_count+0.5),
+           ldeath_rate=log(death_rate),
+           ldeath_rate=ldeath_rate - min(ldeath_rate),
+           ldeath_rate=ldeath_rate + 0.02 * max(ldeath_rate)
+           )
+  
+  dta_m <- x  %>% 
+    filter(sex=="male") %>%
+    select(year, age, ldeath_rate) %>%
+    spread(age, ldeath_rate)
+  
+  rownames(dta_m) <- dta_m$year
+  dta_m$year <- NULL
+  dta_m <- as.matrix(dta_m)
+  
+  dta_f <- x  %>% 
+    filter(sex=="female") %>%
+    select(year, age, ldeath_rate) %>%
+    spread(age, ldeath_rate)
+  
+  rownames(dta_f) <- dta_f$year
+  dta_f$year <- NULL
+  dta_f <- as.matrix(dta_f)
+  dta_f <- apply(dta_f, 2, rev)
+  
+  n_row <- dim(dta_f)[1]
+  n_col <- dim(dta_f)[2]
+  
+  dta_j <- matrix(
+    data=max(data=x$ldeath_rate) * 0.015,
+    nrow= 2 * n_row + 7, 
+    ncol=     n_col + 4
+  )
+  
+  dta_j[
+    2+ 1:n_row,
+    2+ 1:n_col
+    ] <- dta_m
+  
+  dta_j[
+    5 + n_row + 1:n_row,
+    2 + 1:n_col
+    ] <- dta_f
+  
+  r2stl(
+    x=1:nrow(dta_j),
+    y=1:ncol(dta_j), 
+    z=dta_j,
+    z.expand=TRUE, 
+    show.persp=F,
+    filename=paste0(
+      "stl/groups/lmorts/", this_country, "_(",year_min, "-", year_max, ").stl"
+    )
+  )
+  
+}
+
+dta_hmd %>%
+  filter(age <= 90 & sex !="total") %>%
+  d_ply(., .(country), fn, .progress="text")
+
 
 
 #########################################################################################
