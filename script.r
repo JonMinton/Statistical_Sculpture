@@ -22,6 +22,33 @@ dta_hfd <- read.csv("data/tidy/hfd/lexis_square_combined.csv") %>% tbl_df
 
 dta_hfd$code <- tolower(dta_hfd$code)
 
+
+# Create germany (deut) based on counts from east and west germany --------
+
+
+counts_germany <- dta_hmd  %>% filter(country %in% c("deute", "deutw"))
+
+counts_p <- counts_germany %>%
+  select(-death_count) %>%
+  spread(key=country, value=population_count) %>%
+  mutate(country= "deut", deut=deute + deutw) %>%
+  select(country, year, age, sex, population_count = deut)
+
+counts_d <- counts_germany %>%
+  select(-population_count) %>%
+  spread(key=country, value=death_count) %>%
+  mutate(country= "deut", deut=deute + deutw) %>%
+  select(country, year, age, sex, death_count = deut)
+
+
+counts_deut <- counts_p %>%
+  inner_join(counts_d)
+
+dta_hmd <- dta_hmd  %>% bind_rows(counts_deut)
+
+rm(counts_germany, counts_deut, counts_p, counts_d)
+
+
 # Individual Spooling -----------------------------------------------------
 
 dir.create("stl/individual/populations", recursive=TRUE)
