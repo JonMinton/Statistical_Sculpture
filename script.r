@@ -48,6 +48,40 @@ dta_hmd <- dta_hmd  %>% bind_rows(counts_deut)
 
 rm(counts_germany, counts_deut, counts_p, counts_d)
 
+# hfd
+
+counts_germany <- dta_hfd %>% filter(code %in% c("deute", "deutw"))
+
+counts_a <- counts_germany %>%
+  select(-total, -cpfr, -exposure) %>%
+  spread(key=code, value= asfr) %>%
+  mutate(code = "deut", deut=mean(deute + deutw)) %>%
+  select(code, year, age, asfr=deut)
+
+counts_t <- counts_germany %>%
+  select(-asfr, -cpfr, -exposure) %>%
+  spread(key=code, value= total) %>%
+  mutate(code = "deut", deut=deute + deutw) %>%
+  select(code, year, age, total=deut)
+
+counts_c <- counts_germany %>%
+  select(-asfr, -total, -exposure) %>%
+  spread(key=code, value= cpfr) %>%
+  mutate(code = "deut", deut=mean(deute + deutw)) %>%
+  select(code, year, age, cpfr=deut)
+
+counts_e <- counts_germany %>%
+  select(-asfr, -total, -cpfr) %>%
+  spread(key=code, value= exposure) %>%
+  mutate(code = "deut", deut=deute + deutw) %>%
+  select(code, year, age, exposure=deut)
+
+counts_deut <- counts_a %>%
+  inner_join(counts_t) %>%
+  inner_join(counts_c) %>%
+  inner_join(counts_e)
+
+dta_hfd <- dta_hfd  %>% bind_rows(counts_deut)
 
 # Individual Spooling -----------------------------------------------------
 
