@@ -164,12 +164,12 @@ fn <- function(x){
   dta_j[
     2+ 1:n_row,
     2+ 1:n_col
-    ] <- dta_m
+    ] <- dta_f
   
   dta_j[
     5 + n_row + 1:n_row,
     2 + 1:n_col
-    ] <- dta_f
+    ] <- dta_m
   
   r2stl(
     x=1:nrow(dta_j),
