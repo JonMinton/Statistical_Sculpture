@@ -52,37 +52,33 @@ rm(counts_germany, counts_deut, counts_p, counts_d)
 
 counts_germany <- dta_hfd %>% filter(code %in% c("deute", "deutw"))
 
-counts_a <- counts_germany %>%
-  select(-total, -cpfr, -exposure) %>%
-  spread(key=code, value= asfr) %>%
-  mutate(code = "deut", deut=mean(deute + deutw)) %>%
-  select(code, year, age, asfr=deut)
-
-counts_t <- counts_germany %>%
-  select(-asfr, -cpfr, -exposure) %>%
+counts_total <- counts_germany %>%
+  select(code, year, age, total) %>%
   spread(key=code, value= total) %>%
   mutate(code = "deut", deut=deute + deutw) %>%
   select(code, year, age, total=deut)
 
-counts_c <- counts_germany %>%
-  select(-asfr, -total, -exposure) %>%
-  spread(key=code, value= cpfr) %>%
-  mutate(code = "deut", deut=mean(deute + deutw)) %>%
-  select(code, year, age, cpfr=deut)
-
-counts_e <- counts_germany %>%
-  select(-asfr, -total, -cpfr) %>%
+counts_exposure <- counts_germany %>%
+  select(code, year, age, exposure) %>%
   spread(key=code, value= exposure) %>%
   mutate(code = "deut", deut=deute + deutw) %>%
   select(code, year, age, exposure=deut)
 
-counts_deut <- counts_a %>%
-  inner_join(counts_t) %>%
-  inner_join(counts_c) %>%
-  inner_join(counts_e)
+
+counts_deut <- counts_total %>%
+  inner_join(counts_exposure) 
+
+counts_deut <- counts_deut %>%
+  mutate(
+    asfr=total/exposure, 
+    cpfr=NA
+    ) %>%
+  select(code, year, age, asfr, total, cpfr, exposure)
+
 
 dta_hfd <- dta_hfd  %>% bind_rows(counts_deut)
 
+rm(counts_deut, counts_total, counts_exposure)
 # Individual Spooling -----------------------------------------------------
 
 dir.create("stl/individual/populations", recursive=TRUE)
