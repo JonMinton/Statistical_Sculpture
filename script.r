@@ -12,6 +12,10 @@ require(r2stl)
 
 require(rgl)
 require(ggplot2)
+require(lattice)
+require(latticeExtra)
+
+
 
 
 # Load Data ---------------------------------------------------------------
@@ -313,6 +317,7 @@ fn <- function(x){
 dta_hmd %>%
   filter(age <= 90 & sex !="total") %>%
   d_ply(., .(country), fn, .progress="text")
+
 
 
 
