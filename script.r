@@ -321,4 +321,230 @@ dta_hmd %>%
 
 
 
+# Contour maps ------------------------------------------------------------
+
+
+
+pdf("books/asfr.pdf", width = 8, height = 8)
+
+spool_asfr_figs <- function(x){
+  this_country <- x$code[1]
+  min_year <- min(x$year)
+  max_year <- max(x$year)
+  
+  title_label <- paste0(
+    this_country, " (", min_year, " - ", max_year, ")"
+  )
+  
+  file_label <- paste0(
+    "asfr_", this_country, "_(", min_year, "_", max_year, ")" 
+  )
+  
+
+  
+  
+  p <- x %>% filter( age <= 50 ) %>% 
+    contourplot(
+      asfr ~ year * age , 
+      data=. , 
+      region=T, 
+      par.strip.text=list(cex=1.4, fontface="bold"),
+      ylab=list(label="Age in years", cex=1.4),
+      xlab=list(label="Year", cex=1.4),
+      cex=1.4,
+      cuts=20,
+      col.regions=colorRampPalette(brewer.pal(6, "Purples"))(200),
+      main=title_label,
+      labels=list(cex=1.2),
+      col="black",
+      scales=list(
+        x=list(cex=1.4), 
+        y=list(cex=1.4),
+        alternating=3
+      )
+    )
+  
+  
+  
+  print(p)
+
+  return(NULL)
+}
+
+
+
+# Fertility rates as PDF
+
+d_ply(dta_hfd, .(code), failwith(NA, spool_asfr_figs))
+
+dev.off()
+
+
+
+
+
+pdf("books/cmr.pdf", width = 16, height = 8)
+
+spool_cmr_figs <- function(x){
+  this_country <- x$country[1]
+  min_year <- min(x$year)
+  max_year <- max(x$year)
+  
+  title_label <- paste0(
+    this_country, " (", min_year, " - ", max_year, ")"
+  )
+  
+
+  
+  p <- x %>% filter( age <= 90 ) %>% 
+    contourplot(
+      cmr ~ year * age | sex , 
+      data=. , 
+      region=T, 
+      par.strip.text=list(cex=1.4, fontface="bold"),
+      ylab=list(label="Age in years", cex=1.4),
+      xlab=list(label="Year", cex=1.4),
+      cex=1.4,
+      cuts=50,
+      col.regions=rev(colorRampPalette(brewer.pal(6, "Spectral"))(200)),
+      main=title_label,
+      labels=list(cex=1.2),
+      col="black",
+      scales=list(
+        x=list(cex=1.4), 
+        y=list(cex=1.4),
+        alternating=3
+      )
+    )
+  
+  
+  
+  print(p)
+  
+  return(NULL)
+}
+
+
+
+# cmr as PDF
+dta_hmd %>% filter(sex !="total") %>% 
+  mutate(cmr = death_count / population_count) %>% 
+  d_ply(., .(country), failwith(NA, spool_cmr_figs), .progress ="text")
+
+dev.off()
+
+
+
+
+pdf("books/log_cmr.pdf", width = 16, height = 8)
+
+spool_cmr_figs <- function(x){
+  this_country <- x$country[1]
+  min_year <- min(x$year)
+  max_year <- max(x$year)
+  
+  title_label <- paste0(
+    this_country, " (", min_year, " - ", max_year, ")"
+  )
+  
+  
+  
+  p <- x %>% filter( age <= 90 ) %>% 
+    contourplot(
+      lg_cmr ~ year * age | sex , 
+      data=. , 
+      region=T, 
+      par.strip.text=list(cex=1.4, fontface="bold"),
+      ylab=list(label="Age in years", cex=1.4),
+      xlab=list(label="Year", cex=1.4),
+      cex=1.4,
+      cuts=30,
+      col.regions=rev(colorRampPalette(brewer.pal(6, "Spectral"))(200)),
+      main=title_label,
+      labels=list(cex=1.2),
+      col="black",
+      scales=list(
+        x=list(cex=1.4), 
+        y=list(cex=1.4),
+        alternating=3
+      )
+    )
+  
+  
+  
+  print(p)
+  
+  return(NULL)
+}
+
+
+
+# cmr as PDF
+dta_hmd %>% filter(sex !="total") %>% 
+  mutate(cmr = death_count / population_count,
+         lg_cmr = log(cmr, base = 10)) %>% 
+  d_ply(., .(country), failwith(NA, spool_cmr_figs), .progress ="text")
+
+dev.off()
+
+
+# cmr as PDF
+dta_hmd %>% filter(sex !="total") %>% 
+  mutate(cmr = death_count / population_count) %>% 
+  d_ply(., .(country), failwith(NA, spool_cmr_figs), .progress ="text")
+
+dev.off()
+
+
+
+
+pdf("books/pop_cmr.pdf", width = 16, height = 8)
+
+spool_pop_figs <- function(x){
+  this_country <- x$country[1]
+  min_year <- min(x$year)
+  max_year <- max(x$year)
+  
+  title_label <- paste0(
+    this_country, " (", min_year, " - ", max_year, ")"
+  )
+  
+  
+  
+  p <- x %>% filter( age <= 90 ) %>% 
+    contourplot(
+      population_count ~ year * age | sex , 
+      data=. , 
+      region=T, 
+      par.strip.text=list(cex=1.4, fontface="bold"),
+      ylab=list(label="Age in years", cex=1.4),
+      xlab=list(label="Year", cex=1.4),
+      cex=1.4,
+      cuts=30,
+      col.regions=rev(colorRampPalette(brewer.pal(6, "Spectral"))(200)),
+      main=title_label,
+      labels=list(cex=1.2),
+      col="black",
+      scales=list(
+        x=list(cex=1.4), 
+        y=list(cex=1.4),
+        alternating=3
+      )
+    )
+  
+  
+  
+  print(p)
+  
+  return(NULL)
+}
+
+
+
+# cmr as PDF
+dta_hmd %>% filter(sex !="total") %>% 
+  mutate(population_count = population_count / 1000) %>% 
+  d_ply(., .(country), failwith(NA, spool_pop_figs), .progress ="text")
+
+dev.off()
 
