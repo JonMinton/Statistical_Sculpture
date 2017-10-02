@@ -35,7 +35,7 @@ swe_mat %>%
     z.expand=TRUE, 
     show.persp=T,
     filename=paste0(
-      "stl/perrozo_replication.stl"
+      "stl/perozzo_replication.stl"
     )
   )
 
